@@ -4,21 +4,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.yakimovdenis.multimedia.service.CommandsService;
+import org.springframework.context.ApplicationContext;
 
 
 @SpringBootApplication
-public class MultimediaApplication implements CommandLineRunner {
+public class MultimediaApplication {
 
-	@Autowired
-	private CommandsService commandsService;
+    @Autowired
+    private static ApplicationContext applicationContext;
 
-	public static void main(String[] args) {
-		SpringApplication.run(MultimediaApplication.class, args);
-	}
-
-	@Override
-	public void run(String... strings) throws Exception {
-
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(MultimediaApplication.class, args);
+    }
 }

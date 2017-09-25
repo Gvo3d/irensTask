@@ -1,72 +1,57 @@
-package org.yakimovdenis.multimedia.configuration;
+package org.yakimovdenis.multimedia;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
-import liquibase.Contexts;
-import liquibase.LabelExpression;
-import liquibase.Liquibase;
-import liquibase.database.Database;
-import liquibase.database.DatabaseFactory;
-import liquibase.database.jvm.JdbcConnection;
-import liquibase.resource.ClassLoaderResourceAccessor;
-import net.sf.log4jdbc.Log4jdbcProxyDataSource;
-import net.sf.log4jdbc.tools.Log4JdbcCustomFormatter;
-import net.sf.log4jdbc.tools.LoggingType;
-import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.springframework.transaction.annotation.TransactionManagementConfigurer;
+import org.yakimovdenis.multimedia.service.DBEntityServiceImpl;
+import org.yakimovdenis.multimedia.service.DBEntitysService;
+import org.yakimovdenis.multimedia.service.GenresService;
+import org.yakimovdenis.multimedia.service.GenresServiceImpl;
 
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
-import java.sql.Connection;
-import java.sql.DriverManager;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Locale;
 import java.util.Properties;
 
-@Configuration
+/**
+ * Created by Gvozd on 12.07.2017.
+ */
 @EnableTransactionManagement
-public class JDBCConfiguration implements TransactionManagementConfigurer {
+@EnableJpaRepositories(basePackageClasses = MultimediaApplication.class)
+public class TestDaoConfig {
 
-    @Value("${dataSource.driverClassName}")
     private String driver;
-    @Value("${dataSource.url}")
     private String url;
-    @Value("${dataSource.username}")
     private String username;
-    @Value("${dataSource.password}")
     private String password;
-    @Value("${dataSource.package}")
-    private String modelPackage;
-    @Value("${dataSource.dialect}")
-    private String dialect;
+    private String packageToScan;
 
-    public JDBCConfiguration() {
+    public TestDaoConfig() {
         Locale.setDefault(Locale.ENGLISH);
+
+        driver = "org.postgresql.Driver";
+        url ="jdbc:postgresql://192.168.99.100:5432/multimedia";
+        username = "multimedia";
+        password = "root";
+        packageToScan = "org.yakimovdenis.multimedia.models";
     }
 
-    @PostConstruct
-    private void init(){
-        Connection conn = null;
-        Properties connectionProps = new Properties();
-        connectionProps.put("user", username);
-        connectionProps.put("password", password);
-        try {
-            conn = DriverManager.getConnection(url,connectionProps);
-            Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(conn));
-            Liquibase liquibase = new liquibase.Liquibase("db-creation.xml", new ClassLoaderResourceAccessor(), database);
-            liquibase.update(new Contexts(), new LabelExpression());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public DataSource realDataSource() {
+    @Bean
+    public DataSource dataSource() {
         ComboPooledDataSource comboPooledDataSource = new ComboPooledDataSource();
         try {
             Class.forName(driver);
@@ -116,24 +101,14 @@ public class JDBCConfiguration implements TransactionManagementConfigurer {
     }
 
     @Bean
-    public DataSource dataSource() {
-        Log4jdbcProxyDataSource dataSource = new Log4jdbcProxyDataSource(realDataSource());
-        Log4JdbcCustomFormatter log4JdbcCustomFormatter = new Log4JdbcCustomFormatter();
-        log4JdbcCustomFormatter.setLoggingType(LoggingType.SINGLE_LINE);
-        log4JdbcCustomFormatter.setSqlPrefix("SQL:::");
-        dataSource.setLogFormatter(log4JdbcCustomFormatter);
-        return dataSource;
-    }
-
-    @Bean
     public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
         LocalContainerEntityManagerFactoryBean entityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
         entityManagerFactoryBean.setDataSource(dataSource());
-        entityManagerFactoryBean.setPackagesToScan(modelPackage);
+        entityManagerFactoryBean.setPackagesToScan(packageToScan);
         entityManagerFactoryBean.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
 
         Properties jpaProperties = new Properties();
-        jpaProperties.put(org.hibernate.cfg.Environment.DIALECT, dialect);
+        jpaProperties.put(org.hibernate.cfg.Environment.DIALECT, "org.hibernate.dialect.PostgreSQLDialect");
         entityManagerFactoryBean.setJpaProperties(jpaProperties);
         entityManagerFactoryBean.setDataSource(dataSource());
         return entityManagerFactoryBean;
@@ -144,4 +119,13 @@ public class JDBCConfiguration implements TransactionManagementConfigurer {
         return new JpaTransactionManager();
     }
 
+    @Bean
+    DBEntitysService dbEntitysService(){
+        return new DBEntityServiceImpl();
+    }
+
+    @Bean
+    GenresService genresService(){
+        return new GenresServiceImpl();
+    }
 }

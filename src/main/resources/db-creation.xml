@@ -9,16 +9,7 @@
     <changeSet id="creation" author="dyakimov">
         <preConditions onFail="MARK_RAN">
             <not>
-                <tableExists tableName="roles" />
-            </not>
-            <not>
-                <tableExists tableName="phones" />
-            </not>
-            <not>
-                <tableExists tableName="users" />
-            </not>
-            <not>
-                <tableExists tableName="phones_users" />
+                <tableExists tableName="genres" />
             </not>
         </preConditions>
 

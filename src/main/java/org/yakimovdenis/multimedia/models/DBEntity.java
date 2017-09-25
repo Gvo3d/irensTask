@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.ToString;
 
 import javax.persistence.*;
+import javax.sql.rowset.serial.SerialArray;
+import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -11,7 +13,7 @@ import java.util.Set;
 @Data
 @Entity
 @Table(name = "objects")
-public class DBEntity {
+public class DBEntity implements Serializable{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

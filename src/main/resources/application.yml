@@ -5,4 +5,7 @@ dataSource:
   username: multimedia
   password: root
   dialect: org.hibernate.dialect.PostgreSQLDialect
-  package: jshop.model
+  package: org.yakimovdenis.multimedia.models
+
+liquibase:
+  enabled: false
