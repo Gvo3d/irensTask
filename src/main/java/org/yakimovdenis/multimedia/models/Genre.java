@@ -1,6 +1,7 @@
 package org.yakimovdenis.multimedia.models;
 
 import lombok.Data;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.util.Set;
@@ -8,6 +9,7 @@ import java.util.Set;
 @Data
 @Entity
 @Table(name="genres")
+@ToString(exclude = "objects")
 public class Genre {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,5 +20,4 @@ public class Genre {
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(name = "objs_to_genres", joinColumns = @JoinColumn(name = "gnr_id"), inverseJoinColumns = @JoinColumn(name = "obj_id"))
     private Set<DBEntity> objects;
-
 }

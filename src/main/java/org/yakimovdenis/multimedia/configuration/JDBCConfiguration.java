@@ -1,9 +1,13 @@
 package org.yakimovdenis.multimedia.configuration;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
-import jshop.storage.UserCache;
-import net.sf.ehcache.CacheManager;
-import org.apache.log4j.Logger;
+import liquibase.Contexts;
+import liquibase.LabelExpression;
+import liquibase.Liquibase;
+import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.resource.ClassLoaderResourceAccessor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,8 +18,11 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.TransactionManagementConfigurer;
 
+import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.Locale;
 import java.util.Properties;
 
@@ -38,6 +45,22 @@ public class JDBCConfiguration implements TransactionManagementConfigurer {
 
     public JDBCConfiguration() {
         Locale.setDefault(Locale.ENGLISH);
+    }
+
+    @PostConstruct
+    private void init(){
+        Connection conn = null;
+        Properties connectionProps = new Properties();
+        connectionProps.put("user", username);
+        connectionProps.put("password", password);
+        try {
+            conn = DriverManager.getConnection(url,connectionProps);
+            Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(conn));
+            Liquibase liquibase = new liquibase.Liquibase("db-creation.xml", new ClassLoaderResourceAccessor(), database);
+            liquibase.update(new Contexts(), new LabelExpression());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Bean
@@ -99,11 +122,6 @@ public class JDBCConfiguration implements TransactionManagementConfigurer {
 
         Properties jpaProperties = new Properties();
         jpaProperties.put(org.hibernate.cfg.Environment.DIALECT, dialect);
-//        jpaProperties.put(org.hibernate.cfg.Environment.HBM2DDL_AUTO, "false");
-//        jpaProperties.put("hibernate.cache.region.factory_class",org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory.class);
-//        jpaProperties.put("hibernate.cache.use_second_level_cache", true);
-//        jpaProperties.put("hibernate.cache.use_query_cache", true);
-//        jpaProperties.put("net.sf.ehcache.configurationResourceName","/ehcache.xml");
         entityManagerFactoryBean.setJpaProperties(jpaProperties);
         entityManagerFactoryBean.setDataSource(dataSource());
         return entityManagerFactoryBean;
@@ -114,8 +132,4 @@ public class JDBCConfiguration implements TransactionManagementConfigurer {
         return new JpaTransactionManager();
     }
 
-    @Bean
-    CacheManager cacheManager(){
-        return new CacheManager();
-    }
 }
